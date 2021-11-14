@@ -6,6 +6,8 @@
 
 int LIMIT_VALUE = 100;
 
+void populateMatrix(FILE *file,  char* row, Matrix matrix, int n, int m);
+
 
 int createMatrixFiles(int n1, int m1, int n2, int m2) {
     Matrix matrix1 = createMatrix(n1, m1);
@@ -44,22 +46,43 @@ Matrix readMatrixFromFile(filepath filename) {
 
     if (file) {
         char row[128];
+        int n, m;
+        char* columnFromFirstRow;
 
-        // TODO: Ler a primeira linha para criar a Matrix
-        // TODO: Popular a matriz com os valores do arquivo
-        // TODO: Checar se tem mais números pra ler ou se tem menos números que é pra ter na matriz
+        fscanf(file, "%s", row);
 
-        while (fscanf(file, "%s", row) != EOF) {
-            char* numberFromRow = strtok(row, " ");
-            float number =
+        n = atoi(row);
+        m = atoi(columnFromFirstRow);
 
-        }
+        populateMatrix(file, row, matrix, n, m);
     } else {
         printf("Erro na leitura do arquivo %s\n", filename);
         exit(1);
     }
 
     return matrix;
+}
+
+void populateMatrix(FILE *file,  char* row, Matrix matrix, int n, int m) {
+    int i = 0, j = 0;
+    while (fscanf(file, "%s", row) != EOF) {
+        char* numberFromRow = strtok(row, " ");
+        float number = atof(numberFromRow);
+
+        matrix[i][j] = number;
+
+        if (n == i && m == j) {
+            break;
+        } else if (m == j) {
+            ++i;
+            j = 0;
+        }
+    }
+
+    if (n != i && m != j) {
+        perror("Erro na quantidade de valores lidos na matriz.\n");
+        exit(1);
+    }
 }
 
 Matrix createMatrix(int n, int m) {
