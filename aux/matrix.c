@@ -39,7 +39,7 @@ void writeMatrixToFile(Matrix matrix, char* filename, int n, int m) {
 }
 
 Matrix readMatrixFromFile(filepath filename) {
-    Matrix matrix;
+    Matrix matrix = NULL;
     FILE *file;
 
     file = fopen(filename, "r");
@@ -47,9 +47,9 @@ Matrix readMatrixFromFile(filepath filename) {
     if (file) {
         char row[128];
         int n, m;
-        char* columnFromFirstRow;
+        char* columnFromFirstRow = "";
 
-        fscanf(file, "%s", row);
+        fscanf(file, "%127s", row);
 
         n = atoi(row);
         m = atoi(columnFromFirstRow);
@@ -65,7 +65,7 @@ Matrix readMatrixFromFile(filepath filename) {
 
 void populateMatrix(FILE *file,  char* row, Matrix matrix, int n, int m) {
     int i = 0, j = 0;
-    while (fscanf(file, "%s", row) != EOF) {
+    while (fscanf(file, "%127s", row) != EOF) {
         char* numberFromRow = strtok(row, " ");
         float number = atof(numberFromRow);
 
