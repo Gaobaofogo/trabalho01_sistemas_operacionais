@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "matrix.h"
 
 int LIMIT_VALUE = 100;
 
-void populateMatrix(FILE *file,  char* row, Matrix matrix, int n, int m);
+void populateMatrix(FILE *file, Matrix matrix, int n, int m);
 
 
 int createMatrixFiles(int n1, int m1, int n2, int m2) {
@@ -31,15 +32,33 @@ void writeMatrixToFile(Matrix matrix, char* filename, int n, int m) {
 
     for (size_t i = 0; i < n; ++i) {
         for (size_t j = 0; j < m; ++j) {
-            fprintf(file, "c%zu%zu %f\n", i + 1, j + 1, matrix[i][j]);
+            fprintf(file, "%f\n", matrix[i][j]);
         }
     }
 
     fclose(file);
 }
 
-Matrix readMatrixFromFile(filepath filename) {
-    Matrix matrix = NULL;
+void writeMatrixReportToFile(MatrixReport matrixReport, char* filename) {
+    FILE *file;
+
+    file = fopen(filename, "w");
+
+    fprintf(file, "%d %d\n", matrixReport.matrixStruct.n, matrixReport.matrixStruct.m);
+
+    for (size_t i = 0; i < matrixReport.matrixStruct.n; ++i) {
+        for (size_t j = 0; j < matrixReport.matrixStruct.m; ++j) {
+            fprintf(file, "c[%lu][%lu] = %f\n", i + 1, j + 1, matrixReport.matrixStruct.data[i][j]);
+        }
+    }
+
+    fprintf(file, "%f\n", matrixReport.timeSpent);
+
+    fclose(file);
+}
+
+MatrixStruct readMatrixFromFile(filepath filename) {
+    MatrixStruct matrixData;
     FILE *file;
 
     file = fopen(filename, "r");
@@ -52,28 +71,36 @@ Matrix readMatrixFromFile(filepath filename) {
         fscanf(file, "%127s", row);
 
         n = atoi(row);
+        columnFromFirstRow = strtok(row, " ");
         m = atoi(columnFromFirstRow);
 
-        populateMatrix(file, row, matrix, n, m);
+        matrixData.n = n;
+        matrixData.m = m;
+        matrixData.data = createMatrix(n, m);
+
+        populateMatrix(file, matrixData.data, n, m);
     } else {
         printf("Erro na leitura do arquivo %s\n", filename);
         exit(1);
     }
 
-    return matrix;
+    return matrixData;
 }
 
-void populateMatrix(FILE *file,  char* row, Matrix matrix, int n, int m) {
+void populateMatrix(FILE *file, Matrix matrix, int n, int m) {
+    char row[128] = {};
     int i = 0, j = 0;
-    while (fscanf(file, "%127s", row) != EOF) {
-        char* numberFromRow = strtok(row, " ");
-        float number = atof(numberFromRow);
+    fscanf(file, "%127s", row);
 
+    while (fscanf(file, "%127s", row) != EOF || (i < n && j < m)) {
+        float number = atof(row);
         matrix[i][j] = number;
 
-        if (n == i && m == j) {
+        ++j;
+        if ((i + 1) == n && j == m) {
             break;
-        } else if (m == j) {
+        }
+        if (j >= m) {
             ++i;
             j = 0;
         }
@@ -83,6 +110,35 @@ void populateMatrix(FILE *file,  char* row, Matrix matrix, int n, int m) {
         perror("Erro na quantidade de valores lidos na matriz.\n");
         exit(1);
     }
+}
+
+MatrixReport multiplicateMatrixSeq(MatrixStruct m1, MatrixStruct m2) {
+    if (m1.m != m2.n) {
+        perror("A quantidade de colunas e linhas são diferentes.\n");
+        perror("Não é possível realizar a operação.\n");
+
+        exit(1);
+    }
+
+    MatrixReport newMatrix;
+    newMatrix.matrixStruct.n = m1.n;
+    newMatrix.matrixStruct.m = m2.m;
+    newMatrix.matrixStruct.data = createMatrix(m1.n, m2.m);
+
+    clock_t begin = clock();
+
+    for (size_t i = 0; i < m1.n; ++i) {
+        for (size_t j = 0; j < m2.m; ++j) {
+            for (size_t k = 0; k < m2.m; ++k) {
+                newMatrix.matrixStruct.data[i][j] = m1.data[i][k] * m2.data[k][j];
+            }
+        }
+    }
+
+    clock_t end = clock();
+    newMatrix.timeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    return newMatrix;
 }
 
 Matrix createMatrix(int n, int m) {

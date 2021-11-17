@@ -53,3 +53,6 @@ dkms.conf
 
 # Dev dependencies
 .projectile
+sequencial/build
+sequencial/.cache
+sequencial/compile_commands.json
